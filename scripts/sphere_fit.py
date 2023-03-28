@@ -2,6 +2,7 @@
 # useful imports
 import rospy
 import numpy as np
+import math
 from robot_vision_lectures.msg import XYZarray, SphereParams
 from geometry_msgs.msg import Point
 
@@ -41,14 +42,16 @@ def main():
 		# creating A and B matricies for estimation
 		A = np.vstack([x, y, z, np.ones(len(x))]).T
 		B = np.array([eqns]).T
-		# using pseudo inverse and least square method to find sphere approximation
+		# using pseudo inverse in least square method to find sphere approximation
 		P, c1, rank, s = np.linalg.lstsq(A,B,rcond=None)
 		
 		# Set xc, yc, zc, and radius in SphereParams msg
 		params.xc = P[0]
 		params.yc = P[1]
 		params.zc = P[2]
-		params.radius = (P[0]**2 + P[1]**2 + P[2]**2 + P[3])**(0.5)
+		params.radius = math.sqrt(P[0]**2 + P[1]**2 + P[2]**2 + P[3])
+		
+		print(params)
 		
 		# Publishing SphereParams
 		spherePub.publish(params)		
