@@ -51,8 +51,6 @@ def main():
 		params.zc = P[2]
 		params.radius = math.sqrt(P[0]**2 + P[1]**2 + P[2]**2 + P[3])
 		
-		print(params)
-		
 		# Publishing SphereParams
 		spherePub.publish(params)		
 			
