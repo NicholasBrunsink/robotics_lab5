@@ -26,6 +26,14 @@ def main():
 	
 	# set the loop frequency
 	rate = rospy.Rate(10)
+	
+	#initial conditions 
+	xc_out = -0.014
+	yc_out = -0.017
+	zc_out = 0.5
+	p_out = -0.22
+	gain = 0.05
+		
 	# main rospy loop
 	while not rospy.is_shutdown():
 		# empty x, y, z, and equation lists for esitmation calculations
@@ -45,12 +53,20 @@ def main():
 		# using pseudo inverse in least square method to find sphere approximation
 		P, c1, rank, s = np.linalg.lstsq(A,B,rcond=None)
 		
-		# Set xc, yc, zc, and radius in SphereParams msg
-		params.xc = P[0]
-		params.yc = P[1]
-		params.zc = P[2]
-		params.radius = math.sqrt(P[0]**2 + P[1]**2 + P[2]**2 + P[3])
 		
+		xc_out = gain*P[0][0] + (1-gain)*xc_out
+		yc_out = gain*P[1][0] + (1-gain)*yc_out
+		zc_out = gain*P[2][0] + (1-gain)*zc_out
+		p_out = gain*P[3][0] + (1-gain)*p_out
+		
+		# Set xc, yc, zc, and radius in SphereParams msg
+		params.xc = xc_out
+		params.yc = yc_out
+		params.zc = zc_out
+		params.radius = math.sqrt(xc_out**2 + yc_out**2 + zc_out**2 + p_out)
+		
+		print(params)
+
 		# Publishing SphereParams
 		spherePub.publish(params)		
 			
