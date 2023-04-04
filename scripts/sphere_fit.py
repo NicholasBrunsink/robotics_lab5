@@ -16,7 +16,7 @@ def get_ball(ballPoints):
 
 def main():
 	global points
-	# Empty SphereParams msg for storing sphere to publish
+	# Empty SphereParams msg for storing sphere params to publish
 	params = SphereParams()
 	
 	# Initialize node, subscriber, and publisher
@@ -27,11 +27,11 @@ def main():
 	# set the loop frequency
 	rate = rospy.Rate(10)
 	
-	#initial conditions 
+	#Define initial conditions 
 	xc_out = -0.014
 	yc_out = -0.017
-	zc_out = 0.5
-	p_out = -0.22
+	zc_out = 0.52
+	p_out = -0.2
 	gain = 0.05
 		
 	# main rospy loop
@@ -53,17 +53,27 @@ def main():
 		# using pseudo inverse in least square method to find sphere approximation
 		P, c1, rank, s = np.linalg.lstsq(A,B,rcond=None)
 		
-		
+		# filter x with initial x = -0.014 and gain = 0.05
 		xc_out = gain*P[0][0] + (1-gain)*xc_out
+		# filter y with initial y = -0.017 and gain = 0.05
 		yc_out = gain*P[1][0] + (1-gain)*yc_out
+		# filter z with initial z = 0.5 and gain = 0.05
 		zc_out = gain*P[2][0] + (1-gain)*zc_out
+		# filter 
 		p_out = gain*P[3][0] + (1-gain)*p_out
 		
-		# Set xc, yc, zc, and radius in SphereParams msg
+		# Set xc, yc, and zc in SphereParams msg
 		params.xc = xc_out
 		params.yc = yc_out
 		params.zc = zc_out
-		params.radius = math.sqrt(xc_out**2 + yc_out**2 + zc_out**2 + p_out)
+		# set radius = 0 if radius is imaginary
+		# happens often if p_out is a negative number roughly around -z_out
+		# results in math domain error is not caught
+		if xc_out**2 + yc_out**2 + xc_out**2 + p_out < 0:
+			params.radius = 0
+		# set radius to calculated value is radius is not imaginary
+		else:
+			params.radius = math.sqrt(xc_out**2 + yc_out**2 + zc_out**2 + p_out)
 		
 		print(params)
 
